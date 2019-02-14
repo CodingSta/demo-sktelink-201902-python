@@ -3,6 +3,9 @@ import re
 from telegram.ext import Updater, Filters
 from telegram.ext import CommandHandler, ConversationHandler, MessageHandler
 
+import requests
+from bs4 import BeautifulSoup
+
 
 def start(bot, update):
     chat_id = update.message.chat_id
@@ -14,8 +17,23 @@ def echo(bot, update):
     chat_id = update.message.chat_id
     text = update.message.text
 
-    # FIXME: 요청에 맞춰, 응답을 해봅시다.
-    response = text  # 앵무새처럼 그대로 따라하기
+    if text == '야':
+        response = '왜?'
+    elif text == '네이버실검':
+        res = requests.get("http://naver.com")
+        html = res.text
+        soup = BeautifulSoup(html, 'html.parser')
+        tag_list = soup.select('.PM_CL_realtimeKeyword_rolling .ah_k')
+
+        message_list = []
+
+        for tag in tag_list:
+            label = tag.text
+            message_list.append(label)
+
+        response = "\n".join(message_list)
+    else:
+        response = '니가 무슨 말 하는 지 모르겠어. :('
 
     bot.send_message(chat_id=chat_id, text=response)
 
