@@ -54,7 +54,13 @@ def echo(bot, update):
             response = '단어수는 {}글자입니다.'.format(단어수)
         elif text == '네이버실검':
             keyword_list = 네이버_실검()
-            response = "\n".join(keyword_list)
+            line_list = []
+            rank = 1
+            for keyword in keyword_list:
+                line = '{}. {}'.format(rank, keyword)
+                line_list.append(line)
+                rank += 1
+            response = "\n".join(line_list)
             response = '네이버 실시간 검색어\n\n' + response
         else:
             response = '니가 무슨 말 하는 지 모르겠어. :('
