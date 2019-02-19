@@ -30,6 +30,30 @@ def 네이버_실검():
     return keyword_list
 
 
+def 네이버_블로그_검색(검색어):
+    url = "https://search.naver.com/search.naver"
+    params = {
+        'where': 'post',
+        'sm': 'tab_jum',
+        'query': 검색어,
+    }
+
+    res = requests.get(url, params=params)
+    html = res.text
+    soup = BeautifulSoup(html, 'html.parser')
+    tag_list = soup.select('.sh_blog_title')
+
+    post_list = []
+    for tag in tag_list:
+        post_url = tag['href']
+        post_title = tag['title']
+        post_list.append({
+            'title': post_title,
+            'url': post_url,
+        })
+
+    return post_list
+
 
 def start(bot, update):
     chat_id = update.message.chat_id
@@ -62,6 +86,14 @@ def echo(bot, update):
                 rank += 1
             response = "\n".join(line_list)
             response = '네이버 실시간 검색어\n\n' + response
+        elif text.startswith('네이버검색:'):
+            검색어 = text[6:]
+            post_list = 네이버_블로그_검색(검색어)
+            line_list = []
+            for post in post_list:
+                line = '{}\n{}'.format(post['title'], post['url'])
+                line_list.append(line)
+            response = '\n\n'.join(line_list)
         else:
             response = '니가 무슨 말 하는 지 모르겠어. :('
     except Exception as e:
