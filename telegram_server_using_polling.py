@@ -66,7 +66,17 @@ def echo(bot, update):
     text = update.message.text
 
     try:
-        if text == '야':
+        matched = re.match('네이버에서(.+)검색', text)
+        if matched:
+            검색어 = matched.groups()[0]
+            post_list = 네이버_블로그_검색(검색어)
+            line_list = []
+            for post in post_list:
+                line = '{}\n{}'.format(post['title'], post['url'])
+                line_list.append(line)
+            response = '\n\n'.join(line_list)
+
+        elif text == '야':
             response = '왜?'
         elif text.startswith('글자수세어줘:'):
             문자열 = text[7:]
