@@ -6,53 +6,7 @@ from telegram.ext import CommandHandler, ConversationHandler, MessageHandler
 import requests
 from bs4 import BeautifulSoup
 
-
-def 글자수_세기(문자열):
-    return len(문자열)
-
-
-def 단어수_세기(문자열):
-    return len(문자열.split())
-
-
-def 네이버_실검():
-    res = requests.get("http://naver.com")
-    html = res.text
-    soup = BeautifulSoup(html, 'html.parser')
-    tag_list = soup.select('.PM_CL_realtimeKeyword_rolling .ah_k')
-
-    keyword_list = []
-
-    for tag in tag_list:
-        label = tag.text
-        keyword_list.append(label)
-
-    return keyword_list
-
-
-def 네이버_블로그_검색(검색어):
-    url = "https://search.naver.com/search.naver"
-    params = {
-        'where': 'post',
-        'sm': 'tab_jum',
-        'query': 검색어,
-    }
-
-    res = requests.get(url, params=params)
-    html = res.text
-    soup = BeautifulSoup(html, 'html.parser')
-    tag_list = soup.select('.sh_blog_title')
-
-    post_list = []
-    for tag in tag_list:
-        post_url = tag['href']
-        post_title = tag['title']
-        post_list.append({
-            'title': post_title,
-            'url': post_url,
-        })
-
-    return post_list
+from sktelinklibs import tasks
 
 
 def start(bot, update):
@@ -65,45 +19,17 @@ def echo(bot, update):
     chat_id = update.message.chat_id
     text = update.message.text
 
-    try:
-        matched = re.match('네이버에서(.+)검색', text)
-        if matched:
-            검색어 = matched.groups()[0]
-            post_list = 네이버_블로그_검색(검색어)
-            line_list = []
-            for post in post_list:
-                line = '{}\n{}'.format(post['title'], post['url'])
-                line_list.append(line)
-            response = '\n\n'.join(line_list)
+    task_cls_list = [
+        # tasks.TaskYa,
+        tasks.Task_네이버_블로그_검색,
+    ]
 
-        elif text == '야':
-            response = '왜?'
-        elif text.startswith('글자수세어줘:'):
-            문자열 = text[7:]
-            글자수 = 글자수_세기(문자열)
-            response = '글자수는 {}글자입니다.'.format(글자수)
-        elif text.startswith('단어수세어줘:'):
-            문자열 = text[7:]
-            단어수 = 단어수_세기(문자열)
-            response = '단어수는 {}글자입니다.'.format(단어수)
-        elif text == '네이버실검':
-            keyword_list = 네이버_실검()
-            line_list = []
-            rank = 1
-            for keyword in keyword_list:
-                line = '{}. {}'.format(rank, keyword)
-                line_list.append(line)
-                rank += 1
-            response = "\n".join(line_list)
-            response = '네이버 실시간 검색어\n\n' + response
-        elif text.startswith('네이버검색:'):
-            검색어 = text[6:]
-            post_list = 네이버_블로그_검색(검색어)
-            line_list = []
-            for post in post_list:
-                line = '{}\n{}'.format(post['title'], post['url'])
-                line_list.append(line)
-            response = '\n\n'.join(line_list)
+    try:
+        for task_cls in task_cls_list:
+            task = task_cls(text)
+            if task.is_valid():
+                response = task.proc()
+                break
         else:
             response = '니가 무슨 말 하는 지 모르겠어. :('
     except Exception as e:
